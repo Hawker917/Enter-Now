@@ -3,6 +3,9 @@
   "compatibility_date": "2026-08-20",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/server.ts",
+  "secrets": {
+    "required": ["VAPID_SUBJECT", "VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY"]
+  },
   "durable_objects": {
     "bindings": [
       { "name": "ReminderAgent", "class_name": "ReminderAgent" }
