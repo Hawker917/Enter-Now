@@ -1,0 +1,190 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000010000000000000001 /* EnterNowApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000001 /* EnterNowApp.swift */; };
+		A10000010000000000000002 /* CueEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000002 /* CueEngine.swift */; };
+		A10000010000000000000003 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000003 /* NotificationManager.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A20000010000000000000001 /* EnterNowApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnterNowApp.swift; sourceTree = "<group>"; };
+		A20000010000000000000002 /* CueEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CueEngine.swift; sourceTree = "<group>"; };
+		A20000010000000000000003 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		A20000010000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000010000000000000005 /* EnterNow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EnterNow.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A30000010000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A40000010000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A40000010000000000000002 /* EnterNow */,
+				A40000010000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A40000010000000000000002 /* EnterNow */ = {
+			isa = PBXGroup;
+			children = (
+				A20000010000000000000001 /* EnterNowApp.swift */,
+				A20000010000000000000002 /* CueEngine.swift */,
+				A20000010000000000000003 /* NotificationManager.swift */,
+				A20000010000000000000004 /* Info.plist */,
+			);
+			path = EnterNow;
+			sourceTree = "<group>";
+		};
+		A40000010000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (A20000010000000000000005 /* EnterNow.app */);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A50000010000000000000001 /* Enter Now */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A60000010000000000000002 /* Build configuration list for PBXNativeTarget "Enter Now" */;
+			buildPhases = (
+				A30000010000000000000002 /* Sources */,
+				A30000010000000000000001 /* Frameworks */,
+				A30000010000000000000003 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = "Enter Now";
+			productName = "Enter Now";
+			productReference = A20000010000000000000005 /* EnterNow.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A70000010000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A50000010000000000000001 = { CreatedOnToolsVersion = 16.0; };
+				};
+			};
+			buildConfigurationList = A60000010000000000000001 /* Build configuration list for PBXProject "EnterNow" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base,);
+			mainGroup = A40000010000000000000001;
+			productRefGroup = A40000010000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (A50000010000000000000001 /* Enter Now */,);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A30000010000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A30000010000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000010000000000000001 /* EnterNowApp.swift in Sources */,
+				A10000010000000000000002 /* CueEngine.swift in Sources */,
+				A10000010000000000000003 /* NotificationManager.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A80000010000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A80000010000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A80000010000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = EnterNow/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.presentlabs.enternow;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A80000010000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = EnterNow/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.presentlabs.enternow;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A60000010000000000000001 /* Build configuration list for PBXProject "EnterNow" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (A80000010000000000000001 /* Debug */, A80000010000000000000002 /* Release */);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A60000010000000000000002 /* Build configuration list for PBXNativeTarget "Enter Now" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (A80000010000000000000003 /* Debug */, A80000010000000000000004 /* Release */);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A70000010000000000000001 /* Project object */;
+}
