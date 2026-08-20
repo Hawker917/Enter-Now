@@ -55,7 +55,8 @@
           applicationServerKey: base64urlToUint8Array(publicKey),
         });
       }
-      await api("/api/subscribe", { method: "POST", body: JSON.stringify({ subscription: subscription.toJSON() }) });
+      // The Worker expects the PushSubscription JSON itself, not a wrapper object.
+      await api("/api/subscribe", { method: "POST", body: JSON.stringify(subscription.toJSON()) });
       if (status) status.textContent = "Lock-screen cues are enabled. Start a session, then lock the iPhone.";
       if (button) { button.textContent = "Lock-Screen Cues Enabled"; button.disabled = true; }
       return true;
@@ -100,8 +101,6 @@
 
   window.EnterNowPush = { enable, startRemoteSession, stopRemoteSession };
 
-  // The legacy inline setup awaits navigator.serviceWorker.ready and can replace
-  // the button handler after page load. Re-bind after that async initialization.
   window.addEventListener("load", () => {
     bind();
     setTimeout(bind, 750);
