@@ -68,5 +68,6 @@ async function setupLockScreenCues(){
 els.start.addEventListener('click',startSession);els.end.addEventListener('click',()=>endSession(false));els.restart.addEventListener('click',restartSession);els.resume.addEventListener('click',resumeSession);els.ack.addEventListener('click',()=>acknowledge(false));els.custom.addEventListener('change',()=>{if(state.customUrl)URL.revokeObjectURL(state.customUrl);const f=els.custom.files&&els.custom.files[0];state.customUrl=f?URL.createObjectURL(f):null;});els.about.addEventListener('click',()=>els.dialog.showModal());els.closeAbout.addEventListener('click',()=>els.dialog.close());document.addEventListener('visibilitychange',()=>{render();if(document.visibilityState==='visible')state.lastVisibleAt=Date.now();if(state.running&&!state.paused&&Date.now()>=state.nextCueAt){clearCueTimer();fireCue();}});window.addEventListener('pageshow',()=>{render();if(state.running&&!state.paused&&Date.now()>=state.nextCueAt){clearCueTimer();fireCue();}});ui();render();
 if('serviceWorker' in navigator)window.addEventListener('load',async()=>{try{await navigator.serviceWorker.register('./service-worker.js');setupLockScreenCues();}catch(e){console.warn(e);}});
 </script>
+<script src="./push-client.js"></script>
 </body>
 </html>
