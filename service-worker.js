@@ -1,8 +1,9 @@
-const CACHE_NAME = "enter-now-v2";
+const CACHE_NAME = "enter-now-v3";
 
 const APP_FILES = [
   "./",
   "./index.html",
+  "./push-client.js",
   "./manifest.json",
   "./beep-boop.wav",
   "./icon-192.svg",
@@ -35,7 +36,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 // iOS Home Screen Web Push arrives here even when Enter Now is not visible.
-// Safari requires a visible notification; silent/background-only pushes are not supported.
+// The notification itself is the lock-screen cue; iOS controls the notification sound.
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (_) {}
@@ -47,8 +48,9 @@ self.addEventListener("push", (event) => {
     badge: "./icon-192.svg",
     tag: data.tag || "enter-now-cue",
     renotify: true,
+    silent: false,
     requireInteraction: false,
-    data: { url: "./", cue: true }
+    data: { url: "./", cue: true, cueNumber: data.cueNumber || null }
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
