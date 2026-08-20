@@ -19,8 +19,6 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: cloudflare/package-lock.json
       - run: npm install
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
@@ -28,11 +26,21 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: cloudflare
           command: deploy
-      - name: Configure VAPID secrets
+      - name: Set VAPID public key
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: cloudflare
-          command: secret put VAPID_PUBLIC_KEY --text "$VAPID_PUBLIC_KEY"
-        env:
-          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          command: secret put VAPID_PUBLIC_KEY --text "${{ secrets.VAPID_PUBLIC_KEY }}"
+      - name: Set VAPID private key
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: cloudflare
+          command: secret put VAPID_PRIVATE_KEY --text "${{ secrets.VAPID_PRIVATE_KEY }}"
+      - name: Set VAPID subject
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: cloudflare
+          command: secret put VAPID_SUBJECT --text "${{ secrets.VAPID_SUBJECT }}"
