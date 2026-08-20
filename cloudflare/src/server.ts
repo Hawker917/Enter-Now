@@ -17,10 +17,7 @@ type Session = {
   scheduleId?: string;
 };
 
-type AgentState = {
-  subscriptions: Subscription[];
-  session: Session | null;
-};
+type AgentState = { subscriptions: Subscription[]; session: Session | null };
 
 function nextDelaySeconds(minMinutes: number, maxMinutes: number) {
   const min = Math.max(0.1, Number(minMinutes) || 5);
@@ -28,41 +25,44 @@ function nextDelaySeconds(minMinutes: number, maxMinutes: number) {
   return Math.round((min + Math.random() * (max - min)) * 60);
 }
 
+function normalizeSubscription(value: unknown): Subscription {
+  const raw = value as any;
+  const endpoint = typeof raw?.endpoint === "string" ? raw.endpoint : "";
+  const p256dh = typeof raw?.keys?.p256dh === "string" ? raw.keys.p256dh : "";
+  const auth = typeof raw?.keys?.auth === "string" ? raw.keys.auth : "";
+  if (!endpoint || !p256dh || !auth) {
+    throw new Error("Invalid push subscription: endpoint, keys.p256dh, and keys.auth are required");
+  }
+  return { endpoint, expirationTime: raw.expirationTime ?? null, keys: { p256dh, auth } };
+}
+
 export class ReminderAgent extends Agent<Env, AgentState> {
   initialState: AgentState = { subscriptions: [], session: null };
 
-  @callable()
-  async getVapidPublicKey() { return this.env.VAPID_PUBLIC_KEY; }
+  @callable() async getVapidPublicKey() { return this.env.VAPID_PUBLIC_KEY; }
 
-  @callable()
-  async subscribe(subscription: Subscription) {
-    if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) throw new Error("Invalid push subscription");
-    const subscriptions = this.state.subscriptions.filter((s) => s.endpoint !== subscription.endpoint);
-    this.setState({ ...this.state, subscriptions: [...subscriptions, subscription] });
+  @callable() async subscribe(subscription: Subscription) {
+    const normalized = normalizeSubscription(subscription);
+    const subscriptions = this.state.subscriptions.filter((s) => s.endpoint !== normalized.endpoint);
+    this.setState({ ...this.state, subscriptions: [...subscriptions, normalized] });
     return { ok: true };
   }
 
-  @callable()
-  async unsubscribe(endpoint: string) {
+  @callable() async unsubscribe(endpoint: string) {
     this.setState({ ...this.state, subscriptions: this.state.subscriptions.filter((s) => s.endpoint !== endpoint) });
     return { ok: true };
   }
 
-  @callable()
-  async startSession(minMinutes: number, maxMinutes: number) {
+  @callable() async startSession(minMinutes: number, maxMinutes: number) {
     if (this.state.session?.scheduleId) await this.cancelSchedule(this.state.session.scheduleId);
     const min = Math.max(0.1, Number(minMinutes) || 5);
-    const session: Session = {
-      id: crypto.randomUUID(), running: true, minMinutes: min,
-      maxMinutes: Math.max(min, Number(maxMinutes) || min), cueNumber: 0, startedAt: Date.now(),
-    };
+    const session: Session = { id: crypto.randomUUID(), running: true, minMinutes: min, maxMinutes: Math.max(min, Number(maxMinutes) || min), cueNumber: 0, startedAt: Date.now() };
     this.setState({ ...this.state, session });
     await this.scheduleNextCue(session.id);
     return { ok: true, sessionId: session.id };
   }
 
-  @callable()
-  async stopSession() {
+  @callable() async stopSession() {
     const session = this.state.session;
     if (session?.scheduleId) await this.cancelSchedule(session.scheduleId);
     this.setState({ ...this.state, session: null });
@@ -85,38 +85,24 @@ export class ReminderAgent extends Agent<Env, AgentState> {
     const deadEndpoints: string[] = [];
     await Promise.all(this.state.subscriptions.map(async (subscription) => {
       try {
-        await webpush.sendNotification(subscription, JSON.stringify({
-          title: "Enter Now", body: "Beep-Boop — Enter Now.",
-          tag: `enter-now-cue-${session.id}-${cueNumber}`, cue: true, cueNumber,
-        }), { TTL: 120, urgency: "high" });
+        await webpush.sendNotification(subscription, JSON.stringify({ title: "Enter Now", body: "Beep-Boop — Enter Now.", tag: `enter-now-cue-${session.id}-${cueNumber}`, cue: true, cueNumber }), { TTL: 120, urgency: "high" });
       } catch (error) {
         const status = error instanceof webpush.WebPushError ? error.statusCode : 0;
         if (status === 404 || status === 410) deadEndpoints.push(subscription.endpoint);
         if (status >= 500) console.error("Temporary push failure", status);
       }
     }));
-    this.setState({
-      ...this.state,
-      subscriptions: this.state.subscriptions.filter((s) => !deadEndpoints.includes(s.endpoint)),
-      session: { ...session, cueNumber, scheduleId: undefined },
-    });
+    this.setState({ ...this.state, subscriptions: this.state.subscriptions.filter((s) => !deadEndpoints.includes(s.endpoint)), session: { ...session, cueNumber, scheduleId: undefined } });
     await this.scheduleNextCue(session.id);
   }
 }
 
 function corsHeaders(origin: string | null) {
-  return {
-    "Access-Control-Allow-Origin": origin || "*",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-Enter-Now-Device",
-    "Access-Control-Max-Age": "86400",
-  };
+  return { "Access-Control-Allow-Origin": origin || "*", "Access-Control-Allow-Methods": "GET,POST,OPTIONS", "Access-Control-Allow-Headers": "Content-Type, X-Enter-Now-Device", "Access-Control-Max-Age": "86400" };
 }
-
 function json(data: unknown, status = 200, origin: string | null = null) {
   return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", ...corsHeaders(origin) } });
 }
-
 function deviceId(request: Request) {
   const value = request.headers.get("X-Enter-Now-Device") || "default";
   return /^[a-zA-Z0-9_-]{8,80}$/.test(value) ? value : "default";
@@ -127,15 +113,14 @@ export default {
     const url = new URL(request.url);
     const origin = request.headers.get("Origin");
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders(origin) });
-
     if (url.pathname.startsWith("/api/")) {
       const agent = await getAgentByName(env.ReminderAgent, deviceId(request));
       try {
         if (url.pathname === "/api/vapid-public-key" && request.method === "GET") return json({ publicKey: await agent.getVapidPublicKey() }, 200, origin);
         if (url.pathname === "/api/subscribe" && request.method === "POST") {
-          const body = await request.json() as Subscription | { subscription?: Subscription };
-          const subscription = "subscription" in body ? body.subscription : body;
-          return json(await agent.subscribe(subscription as Subscription), 200, origin);
+          const body = await request.json() as any;
+          const subscription = body?.subscription ?? body;
+          return json(await agent.subscribe(normalizeSubscription(subscription)), 200, origin);
         }
         if (url.pathname === "/api/unsubscribe" && request.method === "POST") {
           const body = await request.json() as { endpoint?: string };
@@ -152,14 +137,8 @@ export default {
         return json({ error: error instanceof Error ? error.message : "Request failed" }, 400, origin);
       }
     }
-
     return (await routeAgentRequest(request, env, { cors: true })) ?? new Response("Not found", { status: 404 });
   },
 };
 
-interface Env {
-  ReminderAgent: DurableObjectNamespace<ReminderAgent>;
-  VAPID_PUBLIC_KEY: string;
-  VAPID_PRIVATE_KEY: string;
-  VAPID_SUBJECT: string;
-}
+interface Env { ReminderAgent: DurableObjectNamespace<ReminderAgent>; VAPID_PUBLIC_KEY: string; VAPID_PRIVATE_KEY: string; VAPID_SUBJECT: string; }
