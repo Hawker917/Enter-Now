@@ -132,7 +132,11 @@ export default {
       const agent = await getAgentByName(env.ReminderAgent, deviceId(request));
       try {
         if (url.pathname === "/api/vapid-public-key" && request.method === "GET") return json({ publicKey: await agent.getVapidPublicKey() }, 200, origin);
-        if (url.pathname === "/api/subscribe" && request.method === "POST") return json(await agent.subscribe(await request.json() as Subscription), 200, origin);
+        if (url.pathname === "/api/subscribe" && request.method === "POST") {
+          const body = await request.json() as Subscription | { subscription?: Subscription };
+          const subscription = "subscription" in body ? body.subscription : body;
+          return json(await agent.subscribe(subscription as Subscription), 200, origin);
+        }
         if (url.pathname === "/api/unsubscribe" && request.method === "POST") {
           const body = await request.json() as { endpoint?: string };
           return json(await agent.unsubscribe(body.endpoint || ""), 200, origin);
