@@ -32,15 +32,11 @@ export class ReminderAgent extends Agent<Env, AgentState> {
   initialState: AgentState = { subscriptions: [], session: null };
 
   @callable()
-  async getVapidPublicKey() {
-    return this.env.VAPID_PUBLIC_KEY;
-  }
+  async getVapidPublicKey() { return this.env.VAPID_PUBLIC_KEY; }
 
   @callable()
   async subscribe(subscription: Subscription) {
-    if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
-      throw new Error("Invalid push subscription");
-    }
+    if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) throw new Error("Invalid push subscription");
     const subscriptions = this.state.subscriptions.filter((s) => s.endpoint !== subscription.endpoint);
     this.setState({ ...this.state, subscriptions: [...subscriptions, subscription] });
     return { ok: true };
@@ -48,10 +44,7 @@ export class ReminderAgent extends Agent<Env, AgentState> {
 
   @callable()
   async unsubscribe(endpoint: string) {
-    this.setState({
-      ...this.state,
-      subscriptions: this.state.subscriptions.filter((s) => s.endpoint !== endpoint),
-    });
+    this.setState({ ...this.state, subscriptions: this.state.subscriptions.filter((s) => s.endpoint !== endpoint) });
     return { ok: true };
   }
 
@@ -115,16 +108,18 @@ function corsHeaders(origin: string | null) {
   return {
     "Access-Control-Allow-Origin": origin || "*",
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, X-Enter-Now-Device",
     "Access-Control-Max-Age": "86400",
   };
 }
 
 function json(data: unknown, status = 200, origin: string | null = null) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
-  });
+  return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", ...corsHeaders(origin) } });
+}
+
+function deviceId(request: Request) {
+  const value = request.headers.get("X-Enter-Now-Device") || "default";
+  return /^[a-zA-Z0-9_-]{8,80}$/.test(value) ? value : "default";
 }
 
 export default {
@@ -134,14 +129,10 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders(origin) });
 
     if (url.pathname.startsWith("/api/")) {
-      const agent = await getAgentByName(env.ReminderAgent, "public");
+      const agent = await getAgentByName(env.ReminderAgent, deviceId(request));
       try {
-        if (url.pathname === "/api/vapid-public-key" && request.method === "GET") {
-          return json({ publicKey: await agent.getVapidPublicKey() }, 200, origin);
-        }
-        if (url.pathname === "/api/subscribe" && request.method === "POST") {
-          return json(await agent.subscribe(await request.json() as Subscription), 200, origin);
-        }
+        if (url.pathname === "/api/vapid-public-key" && request.method === "GET") return json({ publicKey: await agent.getVapidPublicKey() }, 200, origin);
+        if (url.pathname === "/api/subscribe" && request.method === "POST") return json(await agent.subscribe(await request.json() as Subscription), 200, origin);
         if (url.pathname === "/api/unsubscribe" && request.method === "POST") {
           const body = await request.json() as { endpoint?: string };
           return json(await agent.unsubscribe(body.endpoint || ""), 200, origin);
@@ -150,9 +141,7 @@ export default {
           const body = await request.json() as { minMinutes?: number; maxMinutes?: number };
           return json(await agent.startSession(body.minMinutes ?? 5, body.maxMinutes ?? 15), 200, origin);
         }
-        if (url.pathname === "/api/session/stop" && request.method === "POST") {
-          return json(await agent.stopSession(), 200, origin);
-        }
+        if (url.pathname === "/api/session/stop" && request.method === "POST") return json(await agent.stopSession(), 200, origin);
         return json({ error: "Not found" }, 404, origin);
       } catch (error) {
         console.error(error);
