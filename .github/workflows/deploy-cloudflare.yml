@@ -2,11 +2,6 @@ name: Deploy Enter Now Push Engine
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "cloudflare/**"
-      - ".github/workflows/deploy-cloudflare.yml"
 
 jobs:
   deploy:
