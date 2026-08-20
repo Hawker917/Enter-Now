@@ -1,0 +1,9 @@
+{
+  "extends": "agents/tsconfig",
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts"]
+}
