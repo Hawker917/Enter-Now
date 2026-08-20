@@ -7,6 +7,14 @@
   "use strict";
 
   const apiBase = () => (window.ENTER_NOW_PUSH_API || localStorage.getItem("enterNowPushApi") || "").replace(/\/$/, "");
+  const deviceId = () => {
+    let id = localStorage.getItem("enterNowDeviceId");
+    if (!id) {
+      id = crypto.randomUUID().replace(/-/g, "");
+      localStorage.setItem("enterNowDeviceId", id);
+    }
+    return id;
+  };
   const $ = (id) => document.getElementById(id);
 
   function base64urlToUint8Array(value) {
@@ -22,7 +30,11 @@
     if (!base) throw new Error("Push service URL is not configured yet.");
     const response = await fetch(base + path, {
       ...options,
-      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      headers: {
+        "Content-Type": "application/json",
+        "X-Enter-Now-Device": deviceId(),
+        ...(options.headers || {}),
+      },
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || `Push service returned ${response.status}`);
@@ -44,14 +56,11 @@
     }
 
     try {
-      const permission = Notification.permission === "granted"
-        ? "granted"
-        : await Notification.requestPermission();
+      const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
       if (permission !== "granted") {
         status.textContent = "Notification permission was not granted.";
         return false;
       }
-
       const registration = await navigator.serviceWorker.ready;
       let subscription = await registration.pushManager.getSubscription();
       const { publicKey } = await api("/api/vapid-public-key");
@@ -61,11 +70,7 @@
           applicationServerKey: base64urlToUint8Array(publicKey),
         });
       }
-      await api("/api/subscribe", {
-        method: "POST",
-        body: JSON.stringify(subscription.toJSON()),
-      });
-
+      await api("/api/subscribe", { method: "POST", body: JSON.stringify(subscription.toJSON()) });
       status.textContent = "Lock-screen cues are enabled. Start a session, then lock the iPhone.";
       button.textContent = "Lock-Screen Cues Enabled";
       button.disabled = true;
@@ -82,10 +87,7 @@
     const min = Math.max(0.1, Number($("minInterval")?.value) || 5);
     const max = Math.max(min, Number($("maxInterval")?.value) || 15);
     try {
-      await api("/api/session/start", {
-        method: "POST",
-        body: JSON.stringify({ minMinutes: min, maxMinutes: max }),
-      });
+      await api("/api/session/start", { method: "POST", body: JSON.stringify({ minMinutes: min, maxMinutes: max }) });
       console.info("Enter Now lock-screen session started");
     } catch (error) {
       console.warn("Lock-screen scheduler could not start", error);
@@ -96,34 +98,22 @@
 
   async function stopRemoteSession() {
     if (!apiBase()) return;
-    try {
-      await api("/api/session/stop", { method: "POST" });
-    } catch (error) {
-      console.warn("Lock-screen scheduler could not stop", error);
-    }
+    try { await api("/api/session/stop", { method: "POST" }); }
+    catch (error) { console.warn("Lock-screen scheduler could not stop", error); }
   }
 
   function init() {
     const card = $("lockCard");
     if (!card) return;
     card.classList.add("ready");
-
     const button = $("enableNotifications");
     if (button) {
       button.onclick = enable;
       enable();
     }
-
-    $("startBtn")?.addEventListener("click", () => {
-      // Let the normal Enter Now session start immediately; the remote scheduler
-      // is deliberately fire-and-forget so network latency never blocks the UI.
-      startRemoteSession();
-    });
+    $("startBtn")?.addEventListener("click", () => startRemoteSession());
     $("endBtn")?.addEventListener("click", () => stopRemoteSession());
-    $("restartBtn")?.addEventListener("click", async () => {
-      await stopRemoteSession();
-      startRemoteSession();
-    });
+    $("restartBtn")?.addEventListener("click", async () => { await stopRemoteSession(); startRemoteSession(); });
   }
 
   window.EnterNowPush = { enable, startRemoteSession, stopRemoteSession };
