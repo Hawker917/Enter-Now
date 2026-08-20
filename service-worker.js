@@ -1,4 +1,4 @@
-const CACHE_NAME = "enter-now-v3";
+const CACHE_NAME = "enter-now-v4";
 
 const APP_FILES = [
   "./",
@@ -35,8 +35,6 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// iOS Home Screen Web Push arrives here even when Enter Now is not visible.
-// The notification itself is the lock-screen cue; iOS controls the notification sound.
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (_) {}
