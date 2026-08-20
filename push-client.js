@@ -48,16 +48,21 @@
       const registration = await navigator.serviceWorker.ready;
       let subscription = await registration.pushManager.getSubscription();
       const { publicKey } = await api("/api/vapid-public-key");
+      if (!publicKey) throw new Error("Push service did not return a VAPID public key.");
       if (!subscription) {
-        subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64urlToUint8Array(publicKey) });
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: base64urlToUint8Array(publicKey),
+        });
       }
-      await api("/api/subscribe", { method: "POST", body: JSON.stringify(subscription.toJSON()) });
+      await api("/api/subscribe", { method: "POST", body: JSON.stringify({ subscription: subscription.toJSON() }) });
       if (status) status.textContent = "Lock-screen cues are enabled. Start a session, then lock the iPhone.";
       if (button) { button.textContent = "Lock-Screen Cues Enabled"; button.disabled = true; }
       return true;
     } catch (error) {
       console.error("Enter Now push setup failed", error);
       if (status) status.textContent = error.message || "Could not connect to the push service.";
+      if (button) button.disabled = false;
       return false;
     }
   }
@@ -79,7 +84,7 @@
     catch (error) { console.warn("Lock-screen scheduler could not stop", error); }
   }
 
-  function init() {
+  function bind() {
     const card = $("lockCard");
     if (!card) return;
     card.classList.add("ready");
@@ -94,5 +99,12 @@
   }
 
   window.EnterNowPush = { enable, startRemoteSession, stopRemoteSession };
-  window.addEventListener("load", init, { once: true });
+
+  // The legacy inline setup awaits navigator.serviceWorker.ready and can replace
+  // the button handler after page load. Re-bind after that async initialization.
+  window.addEventListener("load", () => {
+    bind();
+    setTimeout(bind, 750);
+    setTimeout(bind, 2000);
+  }, { once: true });
 })();
