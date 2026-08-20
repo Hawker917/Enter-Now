@@ -1,0 +1,14 @@
+{
+  "name": "enter-now-push",
+  "compatibility_date": "2026-08-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "src/server.ts",
+  "durable_objects": {
+    "bindings": [
+      { "name": "ReminderAgent", "class_name": "ReminderAgent" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ReminderAgent"] }
+  ]
+}
