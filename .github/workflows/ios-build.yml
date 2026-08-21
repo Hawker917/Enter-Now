@@ -1,0 +1,28 @@
+name: iOS build check
+
+on:
+  push:
+    branches:
+      - ios-background-engine
+  pull_request:
+    branches:
+      - main
+      - ios-background-engine
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build iOS app for simulator
+        run: |
+          xcodebuild \
+            -project ios/EnterNow.xcodeproj \
+            -scheme "Enter Now" \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
