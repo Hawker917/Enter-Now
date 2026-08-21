@@ -1,4 +1,4 @@
-const CACHE_NAME = "enter-now-v7";
+const CACHE_NAME = "enter-now-v8";
 const APP_FILES = ["./", "./index.html", "./push-client.js", "./enhancements.js", "./manifest.json", "./beep-boop.wav", "./icon-192.svg", "./icon-512.svg"];
 
 self.addEventListener("install", (event) => {
@@ -47,6 +47,9 @@ self.addEventListener("push", (event) => {
     renotify: true,
     silent: false,
     requireInteraction: false,
+    // Progressive enhancement: browsers/platforms that honor the Web
+    // Notification vibration option can provide a tactile cue as well.
+    vibrate: [180, 90, 180],
     data: { url: "./", cue: true, cueNumber: data.cueNumber || null }
   }));
 });
