@@ -3,6 +3,7 @@
   "use strict";
 
   const PUSH_API = "https://enter-now.pixeldriver777.workers.dev";
+  const SETUP_KEY = "enterNowPushEnabled";
   const apiBase = () => (window.ENTER_NOW_PUSH_API || localStorage.getItem("enterNowPushApi") || PUSH_API).replace(/\/$/, "");
   const deviceId = () => {
     let id = localStorage.getItem("enterNowDeviceId");
@@ -22,6 +23,22 @@
     return bytes;
   }
 
+  function isStandalone() {
+    return window.matchMedia?.("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  }
+
+  function setCardVisible(visible) {
+    const card = $("lockCard");
+    if (!card) return;
+    if (visible) card.classList.add("ready");
+    else card.classList.remove("ready");
+  }
+
+  function markEnabled() {
+    localStorage.setItem(SETUP_KEY, "1");
+    setCardVisible(false);
+  }
+
   async function api(path, options = {}) {
     const response = await fetch(apiBase() + path, {
       ...options,
@@ -32,7 +49,7 @@
     return data;
   }
 
-  async function enable() {
+  async function enable({prompt = true} = {}) {
     const status = $("lockStatus");
     const button = $("enableNotifications");
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
@@ -40,11 +57,15 @@
       return false;
     }
     try {
-      const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
+      let permission = Notification.permission;
+      if (permission !== "granted" && prompt) permission = await Notification.requestPermission();
       if (permission !== "granted") {
-        if (status) status.textContent = "Notification permission was not granted.";
+        setCardVisible(true);
+        if (status) status.textContent = "One-time permission is required for lock-screen cues.";
+        if (button) button.disabled = false;
         return false;
       }
+
       const registration = await navigator.serviceWorker.ready;
       let subscription = await registration.pushManager.getSubscription();
       const { publicKey } = await api("/api/vapid-public-key");
@@ -55,17 +76,42 @@
           applicationServerKey: base64urlToUint8Array(publicKey),
         });
       }
-      // The Worker expects the PushSubscription JSON itself, not a wrapper object.
+
       await api("/api/subscribe", { method: "POST", body: JSON.stringify(subscription.toJSON()) });
-      if (status) status.textContent = "Lock-screen cues are enabled. Start a session, then lock the iPhone.";
-      if (button) { button.textContent = "Lock-Screen Cues Enabled"; button.disabled = true; }
+      markEnabled();
       return true;
     } catch (error) {
       console.error("Enter Now push setup failed", error);
+      setCardVisible(true);
       if (status) status.textContent = error.message || "Could not connect to the push service.";
       if (button) button.disabled = false;
       return false;
     }
+  }
+
+  async function restorePushState() {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
+
+    const standalone = isStandalone();
+    const permission = Notification.permission;
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (permission === "granted" && subscription) {
+      // The browser already remembers permission and the subscription.
+      // Do not make the user reconnect it on every launch.
+      markEnabled();
+      return;
+    }
+
+    if (standalone && permission === "granted") {
+      // Repair/re-register silently if iOS/browser lost the local subscription.
+      await enable({prompt: false});
+      return;
+    }
+
+    // Only show setup when a genuine one-time action is still required.
+    setCardVisible(true);
   }
 
   async function startRemoteSession() {
@@ -75,8 +121,6 @@
       await api("/api/session/start", { method: "POST", body: JSON.stringify({ minMinutes: min, maxMinutes: max }) });
     } catch (error) {
       console.warn("Lock-screen scheduler could not start", error);
-      const status = $("lockStatus");
-      if (status) status.textContent = "Session is running locally; lock-screen scheduler is unavailable.";
     }
   }
 
@@ -88,15 +132,15 @@
   function bind() {
     const card = $("lockCard");
     if (!card) return;
-    card.classList.add("ready");
     const button = $("enableNotifications");
     if (button) {
-      button.onclick = enable;
-      if (Notification.permission !== "granted") button.disabled = false;
+      button.onclick = () => enable({prompt: true});
+      button.disabled = false;
     }
     $("startBtn")?.addEventListener("click", () => startRemoteSession());
     $("endBtn")?.addEventListener("click", () => stopRemoteSession());
     $("restartBtn")?.addEventListener("click", async () => { await stopRemoteSession(); startRemoteSession(); });
+    restorePushState().catch((error) => console.warn("Could not restore push state", error));
   }
 
   window.EnterNowPush = { enable, startRemoteSession, stopRemoteSession };
