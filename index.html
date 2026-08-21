@@ -3,140 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#e9e9e7">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Enter Now">
-<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1c1c1c">
 <title>Enter Now</title>
 <style>
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:#e9e9e7;color:#161616;font-family:Arial,Helvetica,sans-serif}
-body{display:flex;justify-content:center;touch-action:pan-y}
-main{width:min(360px,calc(100% - 28px));margin:38px auto 30px;text-align:center}
-h1{font-family:Georgia,'Times New Roman',serif;font-size:34px;font-weight:normal;margin:0 0 10px}
-.mission{font-size:14px;line-height:1.45;margin:0 auto 26px;max-width:300px;color:#444}
-.panel{border:1px solid #999;background:#f5f5f3;padding:18px 16px;margin-bottom:12px}
-label{display:block;font-size:13px;margin-bottom:7px;color:#333}
-select{width:100%;height:38px;border:1px solid #777;background:white;color:#111;padding:0 9px;font-size:15px;border-radius:2px}
-.timer{font-family:'Courier New',monospace;font-size:32px;letter-spacing:1px;margin:4px 0 16px}
-.count{font-size:13px;margin:0 0 15px;color:#444}
-button{width:100%;height:42px;border:1px solid #555;border-radius:2px;background:#ddd;color:#111;font-size:15px;font-weight:bold;cursor:pointer}
-button:active{background:#c8c8c8}
-.start{background:#222;color:#fff;border-color:#222;margin-bottom:8px}
-.play{margin-top:8px;background:#eee}
-.status{font-size:12px;height:16px;margin-top:10px;color:#555}
-.small{font-size:11px;color:#666;margin-top:18px}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#1c1c1c;color:#eee;font-family:Arial,Helvetica,sans-serif;transition:.2s}body{display:flex;justify-content:center;touch-action:pan-y}main{width:min(360px,calc(100% - 28px));margin:30px auto;text-align:center}.top{display:flex;justify-content:center;align-items:center;position:relative;margin-bottom:8px}h1{font-family:Georgia,'Times New Roman',serif;font-size:34px;font-weight:normal;margin:0}.icon{position:absolute;width:30px;height:30px;border:1px solid #777;border-radius:50%;background:transparent;color:inherit;font-size:16px;cursor:pointer;padding:0}.theme{left:0}.aboutBtn{right:0}.mission{font-size:14px;line-height:1.45;margin:0 auto 26px;max-width:300px;color:#bbb}.panel{border:1px solid #666;background:#252525;padding:18px 16px;margin-bottom:12px}label{display:block;font-size:13px;margin-bottom:7px;color:#bbb}select{width:100%;height:38px;border:1px solid #777;background:#111;color:#eee;padding:0 9px;font-size:15px;border-radius:2px}.timer{font-family:'Courier New',monospace;font-size:32px;letter-spacing:1px;margin:4px 0 16px}.count{font-size:13px;margin:0 0 15px;color:#aaa}button.action{width:100%;height:42px;border:1px solid #777;border-radius:2px;background:#444;color:#eee;font-size:15px;font-weight:bold;cursor:pointer}.start{background:#eee!important;color:#111!important;border-color:#eee!important;margin-bottom:8px}.play{margin-top:8px;background:#303030!important}.status{font-size:12px;height:16px;margin-top:10px;color:#999}.small{font-size:11px;color:#777;margin-top:18px}.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}.modal.show{display:flex}.about{width:min(330px,100%);background:#252525;border:1px solid #777;padding:24px 20px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.5)}.about h2{font-family:Georgia,'Times New Roman',serif;font-weight:normal;font-size:28px;margin:0 0 12px}.about p{font-size:13px;line-height:1.5;color:#bbb;margin:8px 0}.close{margin-top:14px;width:100%;height:38px;border:1px solid #777;background:#444;color:#eee;border-radius:2px;cursor:pointer}.light{background:#e9e9e7;color:#161616}.light .mission{color:#444}.light .panel{background:#f5f5f3;border-color:#999}.light label{color:#333}.light select{background:white;color:#111}.light .count{color:#444}.light button.action{background:#ddd;color:#111;border-color:#555}.light .start{background:#222!important;color:#fff!important;border-color:#222!important}.light .play{background:#eee!important}.light .status,.light .small{color:#555}.light .about{background:#f5f5f3;color:#161616}.light .about p{color:#444}.light .close{background:#ddd;color:#111;border-color:#555}
 </style>
 </head>
 <body>
-<main>
-<h1>Enter Now</h1>
-<p class="mission">A simple reminder to return your attention to the present moment.</p>
-
-<section class="panel">
-<label for="frequency">Reminders per hour</label>
-<select id="frequency">
-<option value="1">1 time per hour</option>
-<option value="2">2 times per hour</option>
-<option value="3" selected>3 times per hour</option>
-<option value="4">4 times per hour</option>
-<option value="5">5 times per hour</option>
-</select>
-</section>
-
-<section class="panel">
-<div class="timer" id="timer">00:00:00</div>
-<div class="count">Cues: <strong id="count">0</strong></div>
-<button class="start" id="start">Start Timer</button>
-<button id="reset">Stop / Reset</button>
-<button class="play" id="play">Play Sound</button>
-<div class="status" id="status">Ready</div>
-</section>
-
-<div class="small">Enter Now · Presence practice</div>
-</main>
-
+<main id="app"><div class="top"><button class="icon theme" id="theme" aria-label="Switch theme">☼</button><h1>Enter Now</h1><button class="icon aboutBtn" id="aboutBtn" aria-label="About">i</button></div><p class="mission">A simple reminder to return your attention to the present moment.</p><section class="panel"><label for="frequency">Reminders per hour</label><select id="frequency"><option value="1">1 time per hour</option><option value="2">2 times per hour</option><option value="3" selected>3 times per hour</option><option value="4">4 times per hour</option><option value="5">5 times per hour</option></select></section><section class="panel"><div class="timer" id="timer">00:00:00</div><div class="count">Cues: <strong id="count">0</strong></div><button class="action start" id="start">Start Timer</button><button class="action" id="reset">Stop / Reset</button><button class="action play" id="play">Play Sound</button><div class="status" id="status">Ready</div></section><div class="small">Enter Now · Presence practice</div></main>
+<div class="modal" id="aboutModal"><div class="about"><h2>Enter Now</h2><p>A simple reminder to return your attention to the present moment.</p><p>Version 3.0</p><button class="close" id="closeAbout">Close</button></div></div>
 <audio id="sound" preload="auto" src="./beep-boop.wav"></audio>
-
 <script>
 'use strict';
-const timer=document.getElementById('timer');
-const count=document.getElementById('count');
-const frequency=document.getElementById('frequency');
-const start=document.getElementById('start');
-const reset=document.getElementById('reset');
-const play=document.getElementById('play');
-const status=document.getElementById('status');
-const sound=document.getElementById('sound');
-
-let running=false;
-let startedAt=0;
-let timerId=null;
-let cueId=null;
-let cues=0;
-
-function format(ms){
-  const s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
-  return [h,m,sec].map(v=>String(v).padStart(2,'0')).join(':');
-}
-
-function playSound(){
-  sound.currentTime=0;
-  sound.play().catch(()=>{});
-}
-
-function scheduleCue(){
-  clearTimeout(cueId);
-  if(!running)return;
-  const perHour=Number(frequency.value);
-  const interval=3600000/perHour;
-  cueId=setTimeout(()=>{
-    if(!running)return;
-    cues++;
-    count.textContent=cues;
-    playSound();
-    scheduleCue();
-  },interval);
-}
-
-function updateTimer(){
-  if(running)timer.textContent=format(Date.now()-startedAt);
-}
-
-start.addEventListener('click',()=>{
-  if(running)return;
-  running=true;
-  startedAt=Date.now();
-  cues=0;
-  count.textContent='0';
-  timer.textContent='00:00:00';
-  status.textContent='Running';
-  start.disabled=true;
-  frequency.disabled=true;
-  playSound();
-  scheduleCue();
-  timerId=setInterval(updateTimer,250);
-});
-
-reset.addEventListener('click',()=>{
-  running=false;
-  clearInterval(timerId);
-  clearTimeout(cueId);
-  timerId=null;
-  cueId=null;
-  cues=0;
-  timer.textContent='00:00:00';
-  count.textContent='0';
-  status.textContent='Ready';
-  start.disabled=false;
-  frequency.disabled=false;
-});
-
-play.addEventListener('click',playSound);
-
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
-}
+const app=document.getElementById('app'),timer=document.getElementById('timer'),count=document.getElementById('count'),frequency=document.getElementById('frequency'),start=document.getElementById('start'),reset=document.getElementById('reset'),play=document.getElementById('play'),status=document.getElementById('status'),sound=document.getElementById('sound'),theme=document.getElementById('theme'),aboutBtn=document.getElementById('aboutBtn'),aboutModal=document.getElementById('aboutModal'),closeAbout=document.getElementById('closeAbout');
+let running=false,startedAt=0,timerId=null,cueId=null,cues=0;
+function format(ms){const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;return[h,m,sec].map(v=>String(v).padStart(2,'0')).join(':')}
+function playSound(){sound.currentTime=0;sound.play().catch(()=>{})}
+function scheduleCue(){clearTimeout(cueId);if(!running)return;const perHour=Number(frequency.value);const avg=3600000/perHour;const min=Math.max(60000,avg*0.5);const max=Math.min(3600000,avg*1.5);const delay=Math.round(min+Math.random()*(max-min));cueId=setTimeout(()=>{if(!running)return;cues++;count.textContent=cues;playSound();scheduleCue()},delay)}
+function updateTimer(){if(running)timer.textContent=format(Date.now()-startedAt)}
+start.addEventListener('click',()=>{if(running)return;running=true;startedAt=Date.now();cues=0;count.textContent='0';timer.textContent='00:00:00';status.textContent='Running';start.disabled=true;frequency.disabled=true;playSound();scheduleCue();timerId=setInterval(updateTimer,250)})
+reset.addEventListener('click',()=>{running=false;clearInterval(timerId);clearTimeout(cueId);timerId=null;cueId=null;cues=0;timer.textContent='00:00:00';count.textContent='0';status.textContent='Ready';start.disabled=false;frequency.disabled=false})
+play.addEventListener('click',playSound)
+theme.addEventListener('click',()=>{const light=!app.classList.contains('light');app.classList.toggle('light',light);document.body.classList.toggle('light',light);theme.textContent=light?'☾':'☼';document.querySelector('meta[name="theme-color"]').setAttribute('content',light?'#e9e9e7':'#1c1c1c');localStorage.setItem('enterNowTheme',light?'light':'dark')})
+if(localStorage.getItem('enterNowTheme')==='light'){app.classList.add('light');document.body.classList.add('light');theme.textContent='☾';document.querySelector('meta[name="theme-color"]').setAttribute('content','#e9e9e7')}
+aboutBtn.addEventListener('click',()=>aboutModal.classList.add('show'));closeAbout.addEventListener('click',()=>aboutModal.classList.remove('show'));aboutModal.addEventListener('click',e=>{if(e.target===aboutModal)aboutModal.classList.remove('show')});
 </script>
 </body>
 </html>
