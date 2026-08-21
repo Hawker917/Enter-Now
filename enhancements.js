@@ -7,8 +7,9 @@
   const $ = (id) => document.getElementById(id);
   const style = document.createElement("style");
   style.textContent = `
-    body.en-background-active{background:#0d0f12 center/cover fixed no-repeat!important;position:relative}
-    body.en-background-active::before{content:"";position:fixed;inset:0;background:rgba(0,0,0,var(--en-bg-darkness,.42));pointer-events:none;z-index:0}
+    body.en-background-active{background:#0d0f12!important;position:relative}
+    body.en-background-active::before{content:"";position:fixed;inset:0;background-color:#0d0f12;background-position:center;background-size:cover;background-repeat:no-repeat;background-attachment:fixed;opacity:1;pointer-events:none;z-index:0}
+    body.en-background-active::after{content:"";position:fixed;inset:0;background:rgba(0,0,0,var(--en-bg-darkness,.42));pointer-events:none;z-index:0}
     body.en-background-active .app{position:relative;z-index:1}
     .en-polish{margin-top:14px}
     .en-sound-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:end}
@@ -38,13 +39,20 @@
   };
 
   function applyBackground(key) {
+    if (key === "custom" && !state.customBg) return;
     state.background = key;
     localStorage.setItem("enterNowBackground", key);
     document.body.classList.add("en-background-active");
     document.body.style.setProperty("--en-bg-darkness", String(state.darkness));
-    if (key === "custom" && state.customBg) document.body.style.backgroundImage = `url("${state.customBg}")`;
-    else document.body.style.backgroundImage = backgrounds[key]?.css || backgrounds.dark.css;
-    document.body.style.backgroundColor = "#0d0f12";
+    const layer = document.body;
+    const image = key === "custom" ? `url("${state.customBg}")` : backgrounds[key]?.css || backgrounds.dark.css;
+    layer.style.setProperty("--en-bg-image", image);
+    document.body.style.setProperty("--en-bg-layer", image);
+    document.querySelector("#enBgLayer")?.remove();
+    const bgLayer = document.createElement("div");
+    bgLayer.id = "enBgLayer";
+    bgLayer.style.cssText = `position:fixed;inset:0;background:${image};background-position:center;background-size:cover;background-repeat:no-repeat;pointer-events:none;z-index:0;`;
+    document.body.prepend(bgLayer);
     document.querySelectorAll(".en-bg-btn").forEach(b => b.classList.toggle("active", b.dataset.bg === key));
   }
 
@@ -52,100 +60,57 @@
     const C = window.AudioContext || window.webkitAudioContext;
     if (!C) return;
     const ctx = new C();
-    const master = ctx.createGain();
-    master.gain.value = Math.max(0, Math.min(1, volume));
-    master.connect(ctx.destination);
+    const master = ctx.createGain(); master.gain.value = Math.max(0, Math.min(1, volume)); master.connect(ctx.destination);
     const now = ctx.currentTime;
     const make = (freq, start, duration, type="sine", level=0.18) => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = type; o.frequency.setValueAtTime(freq, now + start);
-      g.gain.setValueAtTime(0.0001, now + start);
-      g.gain.exponentialRampToValueAtTime(level, now + start + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + start + duration);
-      o.connect(g); g.connect(master); o.start(now + start); o.stop(now + start + duration + .02);
+      const o = ctx.createOscillator(), g = ctx.createGain(); o.type=type; o.frequency.setValueAtTime(freq,now+start); g.gain.setValueAtTime(.0001,now+start); g.gain.exponentialRampToValueAtTime(level,now+start+.012); g.gain.exponentialRampToValueAtTime(.0001,now+start+duration); o.connect(g);g.connect(master);o.start(now+start);o.stop(now+start+duration+.02);
     };
-    if (kind === "beepboop") { make(880,0,.12,"square",.16); make(520,.12,.18,"sine",.16); }
-    if (kind === "bell") { make(740,0,.7,"sine",.2); make(1110,.02,.55,"sine",.08); }
-    if (kind === "chime") { make(1047,0,.35,"sine",.16); make(1319,.08,.5,"sine",.10); make(1568,.16,.62,"sine",.07); }
-    if (kind === "soft") { make(440,0,.55,"sine",.12); make(660,.08,.65,"sine",.06); }
-    if (kind === "double") { make(660,0,.16,"triangle",.16); make(880,.2,.2,"triangle",.14); }
-    if (kind === "pulse") { make(330,0,.22,"sine",.15); make(440,.25,.28,"sine",.11); }
-    setTimeout(() => ctx.close(), 1100);
+    if(kind==="beepboop"){make(880,0,.12,"square",.16);make(520,.12,.18,"sine",.16)}
+    if(kind==="bell"){make(740,0,.7,"sine",.2);make(1110,.02,.55,"sine",.08)}
+    if(kind==="chime"){make(1047,0,.35,"sine",.16);make(1319,.08,.5,"sine",.1);make(1568,.16,.62,"sine",.07)}
+    if(kind==="soft"){make(440,0,.55,"sine",.12);make(660,.08,.65,"sine",.06)}
+    if(kind==="double"){make(660,0,.16,"triangle",.16);make(880,.2,.2,"triangle",.14)}
+    if(kind==="pulse"){make(330,0,.22,"sine",.15);make(440,.25,.28,"sine",.11)}
+    setTimeout(()=>ctx.close(),1100);
   }
 
-  function patchSessionAudio() {
-    const originalPlay = HTMLMediaElement.prototype.play;
-    if (HTMLMediaElement.prototype.__enterNowPatched) return;
-    HTMLMediaElement.prototype.__enterNowPatched = true;
-    HTMLMediaElement.prototype.play = function() {
-      if (this.id === "backgroundAudio") {
-        const sound = $("sound")?.value || "beepboop";
-        this.volume = state.soundVolume;
-        if (sound !== "beepboop" && sound !== "custom") {
-          tone(sound, state.soundVolume);
-          return Promise.resolve();
-        }
+  function patchSessionAudio(){
+    const originalPlay=HTMLMediaElement.prototype.play;
+    if(HTMLMediaElement.prototype.__enterNowPatched)return;
+    HTMLMediaElement.prototype.__enterNowPatched=true;
+    HTMLMediaElement.prototype.play=function(){
+      if(this.id==="backgroundAudio"){
+        const sound=$("sound")?.value||"beepboop"; this.volume=state.soundVolume;
+        if(sound!=="beepboop"&&sound!=="custom"){tone(sound,state.soundVolume);return Promise.resolve();}
       }
       return originalPlay.call(this);
     };
   }
 
-  function addSettings() {
-    const reminder = Array.from(document.querySelectorAll("section.card")).find(s => s.querySelector("#sound"));
-    if (!reminder || document.getElementById("enAudioPolish")) return;
-    const sound = $("sound");
-    sound.innerHTML = `
-      <option value="beepboop">Beep-Boop</option>
-      <option value="bell">Soft Bell</option>
-      <option value="chime">Wood Chime</option>
-      <option value="soft">Soft Tone</option>
-      <option value="double">Double Tone</option>
-      <option value="pulse">Gentle Pulse</option>
-      <option value="custom">Custom Sound</option>`;
-    const customRow = $("customSound")?.closest("label");
-    const wrap = document.createElement("div");
-    wrap.id = "enAudioPolish"; wrap.className = "en-polish";
-    wrap.innerHTML = `<div class="en-sound-row"><label>Sound</label><button id="enPlaySound" class="secondary en-play" type="button">▶ Play</button></div><label class="en-polish">Volume<div class="en-range-wrap"><span>Quiet</span><input id="enVolume" class="en-range" type="range" min="0" max="1" step="0.01" value="${state.soundVolume}"><span>Loud</span></div></label>`;
-    reminder.appendChild(wrap);
-    $("enVolume").addEventListener("input", e => { state.soundVolume = Number(e.target.value); localStorage.setItem("enterNowVolume", state.soundVolume); });
-    $("enPlaySound").addEventListener("click", async () => {
-      const kind = sound.value;
-      if (kind === "custom") {
-        const a = $("backgroundAudio");
-        if (a?.src && a.src !== location.href) { a.volume = state.soundVolume; a.currentTime = 0; try { await a.play(); } catch (_) {} }
-        else $("customSound")?.click();
-      } else if (kind === "beepboop") {
-        const a = $("backgroundAudio"); a.src = new URL("./beep-boop.wav", location.href).href; a.volume = state.soundVolume; a.currentTime = 0; try { await a.play(); } catch (_) {}
-      } else tone(kind, state.soundVolume);
-    });
-    if (customRow) customRow.querySelector("input")?.addEventListener("change", () => {
-      const file = customRow.querySelector("input").files?.[0];
-      if (file) { const a = $("backgroundAudio"); a.src = URL.createObjectURL(file); a.volume = state.soundVolume; sound.value = "custom"; }
-    });
+  function addSettings(){
+    const reminder=Array.from(document.querySelectorAll("section.card")).find(s=>s.querySelector("#sound")); if(!reminder||document.getElementById("enAudioPolish"))return;
+    const sound=$("sound");
+    sound.innerHTML=`<option value="beepboop">Beep-Boop</option><option value="bell">Soft Bell</option><option value="chime">Wood Chime</option><option value="soft">Soft Tone</option><option value="double">Double Tone</option><option value="pulse">Gentle Pulse</option><option value="custom">Custom Sound</option>`;
+    const customRow=$("customSound")?.closest("label"); const wrap=document.createElement("div"); wrap.id="enAudioPolish";wrap.className="en-polish";
+    wrap.innerHTML=`<div class="en-sound-row"><label>Sound</label><button id="enPlaySound" class="secondary en-play" type="button">▶ Play</button></div><label class="en-polish">Volume<div class="en-range-wrap"><span>Quiet</span><input id="enVolume" class="en-range" type="range" min="0" max="1" step="0.01" value="${state.soundVolume}"><span>Loud</span></div></label>`; reminder.appendChild(wrap);
+    $("enVolume").addEventListener("input",e=>{state.soundVolume=Number(e.target.value);localStorage.setItem("enterNowVolume",state.soundVolume)});
+    $("enPlaySound").addEventListener("click",async()=>{const kind=sound.value;if(kind==="custom"){const a=$("backgroundAudio");if(a?.src&&a.src!==location.href){a.volume=state.soundVolume;a.currentTime=0;try{await a.play()}catch(_){}}else $("customSound")?.click()}else if(kind==="beepboop"){const a=$("backgroundAudio");a.src=new URL("./beep-boop.wav",location.href).href;a.volume=state.soundVolume;a.currentTime=0;try{await a.play()}catch(_){}}else tone(kind,state.soundVolume)});
+    if(customRow)customRow.querySelector("input")?.addEventListener("change",()=>{const file=customRow.querySelector("input").files?.[0];if(file){const a=$("backgroundAudio");a.src=URL.createObjectURL(file);a.volume=state.soundVolume;sound.value="custom"}});
     patchSessionAudio();
   }
 
-  function addBackgrounds() {
-    if (document.getElementById("enBackgrounds")) return;
-    const section = document.createElement("section");
-    section.id = "enBackgrounds"; section.className = "card";
-    section.innerHTML = `<h2>Background</h2><div class="en-bg-grid"></div><label class="en-bg-custom">Custom photo<input id="enBgFile" type="file" accept="image/*"><span class="hint">Choose any photo from your photo library.</span></label><label class="en-polish">Background darkness<div class="en-range-wrap"><span>Light</span><input id="enDarkness" class="en-range" type="range" min="0" max="0.8" step="0.01" value="${state.darkness}"><span>Dark</span></div></label><div id="enBgStatus" class="en-bg-status">Your photo stays on this device.</div>`;
-    const autoCard = $("autoResume")?.closest("section.card");
-    (autoCard?.parentNode || document.querySelector("main.app"))?.insertBefore(section, autoCard || null);
-    const grid = section.querySelector(".en-bg-grid");
-    Object.entries(backgrounds).forEach(([key, bg]) => {
-      const b = document.createElement("button"); b.type="button"; b.className="en-bg-btn"; b.dataset.bg=key; b.style.setProperty("--en-thumb", bg.css); b.innerHTML=`<span>${bg.label}</span>`; b.addEventListener("click",()=>applyBackground(key)); grid.appendChild(b);
-    });
-    $("enDarkness").addEventListener("input", e => { state.darkness=Number(e.target.value); localStorage.setItem("enterNowBgDarkness",state.darkness); document.body.style.setProperty("--en-bg-darkness",String(state.darkness)); });
-    $("enBgFile").addEventListener("change", e => {
-      const file=e.target.files?.[0]; if(!file) return;
-      const reader=new FileReader(); reader.onload=()=>{state.customBg=reader.result; try{localStorage.setItem("enterNowCustomBackground",reader.result)}catch(_){ } applyBackground("custom"); $("enBgStatus").textContent="Custom photo selected.";}; reader.readAsDataURL(file);
-    });
-    try { const saved=localStorage.getItem("enterNowCustomBackground"); if(saved) state.customBg=saved; } catch(_){}
-    if (state.background === "custom" && !state.customBg) state.background="dark";
-    applyBackground(state.background);
+  function addBackgrounds(){
+    if(document.getElementById("enBackgrounds"))return;
+    const section=document.createElement("section");section.id="enBackgrounds";section.className="card";
+    section.innerHTML=`<h2>Background</h2><div class="en-bg-grid"></div><label class="en-bg-custom">Custom photo<input id="enBgFile" type="file" accept="image/*"><span class="hint">Choose any photo from your photo library.</span></label><label class="en-polish">Background darkness<div class="en-range-wrap"><span>Light</span><input id="enDarkness" class="en-range" type="range" min="0" max="0.8" step="0.01" value="${state.darkness}"><span>Dark</span></div></label><div id="enBgStatus" class="en-bg-status">Your photo stays on this device.</div>`;
+    const autoCard=$("autoResume")?.closest("section.card");(autoCard?.parentNode||document.querySelector("main.app"))?.insertBefore(section,autoCard||null);
+    const grid=section.querySelector(".en-bg-grid");Object.entries(backgrounds).forEach(([key,bg])=>{const b=document.createElement("button");b.type="button";b.className="en-bg-btn";b.dataset.bg=key;b.style.setProperty("--en-thumb",bg.css);b.innerHTML=`<span>${bg.label}</span>`;b.addEventListener("click",()=>applyBackground(key));grid.appendChild(b)});
+    $("enDarkness").addEventListener("input",e=>{state.darkness=Number(e.target.value);localStorage.setItem("enterNowBgDarkness",state.darkness);document.body.style.setProperty("--en-bg-darkness",String(state.darkness))});
+    $("enBgFile").addEventListener("change",e=>{const file=e.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{state.customBg=reader.result;applyBackground("custom");$("enBgStatus").textContent=`Custom photo selected: ${file.name}`};reader.readAsDataURL(file)});
+    try{const saved=localStorage.getItem("enterNowCustomBackground");if(saved)state.customBg=saved}catch(_){}
+    if(state.customBg&&state.background==="custom")applyBackground("custom");else applyBackground(state.background);
   }
 
-  function init() { addSettings(); addBackgrounds(); }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, {once:true}); else init();
+  function init(){addSettings();addBackgrounds()}
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});else init();
 })();
