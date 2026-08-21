@@ -4,6 +4,7 @@
 
   const PUSH_API = "https://enter-now.pixeldriver777.workers.dev";
   const SETUP_KEY = "enterNowPushEnabled";
+  const INSTALL_KEY = "enterNowInstallSeen";
   const apiBase = () => (window.ENTER_NOW_PUSH_API || localStorage.getItem("enterNowPushApi") || PUSH_API).replace(/\/$/, "");
   const deviceId = () => {
     let id = localStorage.getItem("enterNowDeviceId");
@@ -21,6 +22,10 @@
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
     return bytes;
+  }
+
+  function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
   }
 
   function isStandalone() {
@@ -49,6 +54,26 @@
     return data;
   }
 
+  function showInstallGuide() {
+    if (!isIOS() || isStandalone() || localStorage.getItem(INSTALL_KEY) === "1") return;
+    if (document.getElementById("enterNowInstallGuide")) return;
+
+    const style = document.createElement("style");
+    style.id = "enterNowInstallGuideStyle";
+    style.textContent = `#enterNowInstallGuide{position:fixed;inset:0;z-index:10001;display:grid;place-items:center;padding:20px;background:rgba(5,6,8,.84);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}#enterNowInstallGuide .box{width:min(430px,100%);background:#191c22;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:28px 24px;box-shadow:0 25px 80px rgba(0,0,0,.5)}#enterNowInstallGuide h2{margin:0 0 10px;font-size:24px}#enterNowInstallGuide p{line-height:1.5;opacity:.78}#enterNowInstallGuide .steps{margin:18px 0;padding-left:24px;line-height:1.8}#enterNowInstallGuide button{width:100%;margin-top:8px;background:#f1f2f4;color:#101216;font-weight:750}`;
+    document.head.appendChild(style);
+
+    const overlay = document.createElement("div");
+    overlay.id = "enterNowInstallGuide";
+    overlay.innerHTML = `<div class="box"><h2>One-time setup</h2><p>Enter Now needs to be added to your Home Screen once so iPhone can treat it like an app and deliver lock-screen reminders.</p><ol class="steps"><li>Tap Safari's <strong>Share</strong> button.</li><li>Choose <strong>Add to Home Screen</strong>.</li><li>Open <strong>Enter Now</strong> from the new Home Screen icon.</li></ol><button id="enterNowInstallDone" type="button">I've added Enter Now</button></div>`;
+    document.body.appendChild(overlay);
+    $("enterNowInstallDone").onclick = () => {
+      localStorage.setItem(INSTALL_KEY, "1");
+      overlay.remove();
+      setCardVisible(false);
+    };
+  }
+
   async function enable({prompt = true} = {}) {
     const status = $("lockStatus");
     const button = $("enableNotifications");
@@ -61,7 +86,7 @@
       if (permission !== "granted" && prompt) permission = await Notification.requestPermission();
       if (permission !== "granted") {
         setCardVisible(true);
-        if (status) status.textContent = "One-time permission is required for lock-screen cues.";
+        if (status) status.textContent = "Allow notifications once to enable lock-screen cues.";
         if (button) button.disabled = false;
         return false;
       }
@@ -98,19 +123,15 @@
     const subscription = await registration.pushManager.getSubscription();
 
     if (permission === "granted" && subscription) {
-      // The browser already remembers permission and the subscription.
-      // Do not make the user reconnect it on every launch.
       markEnabled();
       return;
     }
 
     if (standalone && permission === "granted") {
-      // Repair/re-register silently if iOS/browser lost the local subscription.
       await enable({prompt: false});
       return;
     }
 
-    // Only show setup when a genuine one-time action is still required.
     setCardVisible(true);
   }
 
@@ -141,6 +162,7 @@
     $("endBtn")?.addEventListener("click", () => stopRemoteSession());
     $("restartBtn")?.addEventListener("click", async () => { await stopRemoteSession(); startRemoteSession(); });
     restorePushState().catch((error) => console.warn("Could not restore push state", error));
+    if (isIOS() && !isStandalone()) showInstallGuide();
   }
 
   window.EnterNowPush = { enable, startRemoteSession, stopRemoteSession };
