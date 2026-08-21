@@ -1,4 +1,4 @@
-const CACHE_NAME = "enter-now-v6";
+const CACHE_NAME = "enter-now-v7";
 const APP_FILES = ["./", "./index.html", "./push-client.js", "./enhancements.js", "./manifest.json", "./beep-boop.wav", "./icon-192.svg", "./icon-512.svg"];
 
 self.addEventListener("install", (event) => {
@@ -19,8 +19,8 @@ self.addEventListener("fetch", (event) => {
       if (!type.includes("text/html")) return response;
       const html = await response.text();
       let patched = html;
-      const pushMarker = "<script src=\"./push-client.js?v=6\"></script>";
-      const enhancementMarker = "<script src=\"./enhancements.js?v=1\"></script>";
+      const pushMarker = "<script src=\"./push-client.js?v=7\"></script>";
+      const enhancementMarker = "<script src=\"./enhancements.js?v=2\"></script>";
       if (!patched.includes(pushMarker)) patched = patched.replace(/<\/body>/i, `${pushMarker}</body>`);
       if (!patched.includes(enhancementMarker)) patched = patched.replace(/<\/body>/i, `${enhancementMarker}</body>`);
       return new Response(patched, { status: response.status, statusText: response.statusText, headers: response.headers });
