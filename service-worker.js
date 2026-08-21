@@ -1,5 +1,5 @@
-const CACHE_NAME = "enter-now-v5";
-const APP_FILES = ["./", "./index.html", "./push-client.js", "./manifest.json", "./beep-boop.wav", "./icon-192.svg", "./icon-512.svg"];
+const CACHE_NAME = "enter-now-v6";
+const APP_FILES = ["./", "./index.html", "./push-client.js", "./enhancements.js", "./manifest.json", "./beep-boop.wav", "./icon-192.svg", "./icon-512.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_FILES)));
@@ -18,8 +18,11 @@ self.addEventListener("fetch", (event) => {
       const type = response.headers.get("content-type") || "";
       if (!type.includes("text/html")) return response;
       const html = await response.text();
-      const marker = "<script src=\"./push-client.js?v=5\"></script>";
-      const patched = html.includes(marker) ? html : html.replace(/<\/body>/i, `${marker}</body>`);
+      let patched = html;
+      const pushMarker = "<script src=\"./push-client.js?v=6\"></script>";
+      const enhancementMarker = "<script src=\"./enhancements.js?v=1\"></script>";
+      if (!patched.includes(pushMarker)) patched = patched.replace(/<\/body>/i, `${pushMarker}</body>`);
+      if (!patched.includes(enhancementMarker)) patched = patched.replace(/<\/body>/i, `${enhancementMarker}</body>`);
       return new Response(patched, { status: response.status, statusText: response.statusText, headers: response.headers });
     }).catch(() => caches.match(event.request)));
     return;
